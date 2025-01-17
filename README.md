@@ -8,13 +8,13 @@ This project leverages AWS S3 to store weather data, making it highly scalable, 
 
 ## Table of Contents
 
-- [Prerequisites]
-- [Project Overview]
-- [Core Features]
-- [Tools Used]
-- [Project Setup]
-- [Environment Setup]
-- [Running the Project]
+- **Prerequisites**
+- **Project Overview**
+- **Core Features**
+- **Tools Used**
+- **Project Setup**
+- **Environment Setup**
+- **Running the Project**
 
 
 ## Prerequisites
