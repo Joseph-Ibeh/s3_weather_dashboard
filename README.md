@@ -58,6 +58,8 @@ This project utilizes several tools and libraries to build the dashboard:
 
 Follow these steps to set up the project on your local machine.
 
+[![file structure](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/file%20_structure.png)]                     
+
 ### 1. Create Project Structure
 
 Run the following commands to create the necessary directories and files:
