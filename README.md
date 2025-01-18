@@ -67,6 +67,10 @@ mkdir weather_dashboard_demo
 cd weather_dashboard_demo
 mkdir src tests data
 ```
+[![mkdir](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/mkdir_cd.png)]
+
+[![src tests data](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/src_tests_data.png)]
+
 
 ### 2. Create Files
 Create the required Python files and configuration files:
@@ -76,6 +80,10 @@ touch src/__init__.py src/weather_dashboard.py
 touch requirements.txt README.md .env
 ```
 
+[![init py](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/touchsrc-init__py.png)]
+
+[![touch requiremnents ](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/touch%20requirement_txt.png)]
+
 ### 3.  Initialize Git Repository
 Initialize a new Git repository and set up the main branch:
 
@@ -83,6 +91,9 @@ Initialize a new Git repository and set up the main branch:
 git init
 git branch -M main
 ```
+[![git init ](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/git_init.png)]   
+
+[![touch requiremnents ](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/git_branch.png)]
 
 ### 4. Configure .gitignore
 Create a .gitignore file to ignore unnecessary files:
@@ -93,6 +104,9 @@ echo "__pycache__/" >> .gitignore
 echo "*.zip" >> .gitignore
 ```
 
+[![gitignore](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/git_ignore.png)]
+
+
 ### 5. Add Dependencies
 Add the required dependencies to requirements.txt:
 
@@ -101,6 +115,10 @@ echo "boto3==1.26.137" >> requirements.txt
 echo "python-dotenv==1.0.0" >> requirements.txt
 echo "requests==2.28.2" >> requirements.txt
 ```
+[![bot3](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/echo_boto_python_requirements.png)]
+
+[![request](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/echo_request_requirements.png)]
+
 
 ### 6. Install Dependencies
 Run the following command to install the dependencies from requirements.txt:
@@ -108,6 +126,9 @@ Run the following command to install the dependencies from requirements.txt:
 ```
 pip install -r requirements.txt
 ```
+[![dependencies](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/pip_install_requirements.png)]
+
+
 
 ## Environment Setup
 ### 1. AWS CLI Configuration
@@ -158,6 +179,113 @@ echo "AWS_BUCKET_NAME=weather-dashboard-joseph" >> .env
 Make sure to replace your key here with your actual OpenWeather API key and weather-dashboard-joseph with your S3 bucket name.
 
 ## Running the Project
+Here is the script that fetches weather data and uploads it to AWS S3:
+
+```
+import os
+import json
+import boto3
+import requests
+from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+class WeatherDashboard:
+    def __init__(self):
+        self.api_key = os.getenv('OPENWEATHER_API_KEY')
+        self.bucket_name = os.getenv('AWS_BUCKET_NAME')
+        self.s3_client = boto3.client('s3')
+
+    def create_bucket_if_not_exists(self):
+        """Create S3 bucket if it doesn't exist"""
+        try:
+            self.s3_client.head_bucket(Bucket=self.bucket_name)
+            print(f"Bucket {self.bucket_name} exists")
+        except:
+            print(f"Creating bucket {self.bucket_name}")
+        try:
+            # Simpler creation for us-east-1
+            self.s3_client.create_bucket(Bucket=self.bucket_name)
+            print(f"Successfully created bucket {self.bucket_name}")
+        except Exception as e:
+            print(f"Error creating bucket: {e}")
+
+    def fetch_weather(self, city):
+        """Fetch weather data from OpenWeather API"""
+        base_url = "http://api.openweathermap.org/data/2.5/weather"
+        params = {
+            "q": city,
+            "appid": self.api_key,
+            "units": "imperial"
+        }
+        
+        try:
+            response = requests.get(base_url, params=params)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching weather data: {e}")
+            return None
+
+    def save_to_s3(self, weather_data, city):
+        """Save weather data to S3 bucket"""
+        if not weather_data:
+            return False
+            
+        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+        file_name = f"weather-data/{city}-{timestamp}.json"
+        
+        try:
+            weather_data['timestamp'] = timestamp
+            self.s3_client.put_object(
+                Bucket=self.bucket_name,
+                Key=file_name,
+                Body=json.dumps(weather_data),
+                ContentType='application/json'
+            )
+            print(f"Successfully saved data for {city} to S3")
+            return True
+        except Exception as e:
+            print(f"Error saving to S3: {e}")
+            return False
+
+def main():
+    dashboard = WeatherDashboard()
+    
+    # Create bucket if needed
+    dashboard.create_bucket_if_not_exists()
+    
+    cities = ["Philadelphia", "Seattle", "New York"]
+    
+    for city in cities:
+        print(f"\nFetching weather for {city}...")
+        weather_data = dashboard.fetch_weather(city)
+        if weather_data:
+            temp = weather_data['main']['temp']
+            feels_like = weather_data['main']['feels_like']
+            humidity = weather_data['main']['humidity']
+            description = weather_data['weather'][0]['description']
+            
+            print(f"Temperature: {temp}°F")
+            print(f"Feels like: {feels_like}°F")
+            print(f"Humidity: {humidity}%")
+            print(f"Conditions: {description}")
+            
+            # Save to S3
+            success = dashboard.save_to_s3(weather_data, city)
+            if success:
+                print(f"Weather data for {city} saved to S3!")
+        else:
+            print(f"Failed to fetch weather data for {city}")
+
+if __name__ == "__main__":
+    main()
+```
+
+[![python script in env](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/python_script.png)
+
 
 ### 1. Run the Script
 Once the setup is complete, you can run the weather_dashboard.py script to fetch weather data and upload it to the AWS S3 bucket:
@@ -166,10 +294,18 @@ Once the setup is complete, you can run the weather_dashboard.py script to fetch
 python src/weather_dashboard.py
 ```
 
+
 This will pull the latest weather data from the OpenWeather API and upload it to your AWS S3 bucket.
 
+[![output](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/python_weather_output.png)   
+
+
+
 ### 2. Verify Your S3 Bucket
-Log in to your AWS account and navigate to your S3 bucket to verify that the weather data has been successfully uploaded. If you don't want to accumulate unnecessary costs, be sure to delete the contents of your bucket after verification.
+Log in to your AWS account and navigate to your S3 bucket to verify that the weather data has been successfully uploaded. If you don't want to accumulate unnecessary costs, be sure to empty and delete the contents of your bucket after verification.
+
+[![s3 otput 1](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/s3_bucket_output_1.png) 
+[![s3 output 2](https://github.com/Joseph-Ibeh/s3_weather_dashboard/blob/main/screenshots/s3_output_2.png) 
 
 
 
